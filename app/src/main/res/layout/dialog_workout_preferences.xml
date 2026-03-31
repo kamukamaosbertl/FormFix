@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- ===================================================== -->
+        <!-- HEADER                                                 -->
+        <!-- ===================================================== -->
+        <TextView
+            android:id="@+id/tv_preferences_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Workout Preferences"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <TextView
+            android:id="@+id/tv_preferences_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Adjust workout voice and plank behavior."
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary" />
+
+        <!-- ===================================================== -->
+        <!-- VOICE FEEDBACK MODE                                    -->
+        <!-- ===================================================== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Voice Feedback"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <RadioGroup
+            android:id="@+id/radio_group_voice_mode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <RadioButton
+                android:id="@+id/radio_voice_off"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Off" />
+
+            <RadioButton
+                android:id="@+id/radio_voice_important"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Important only" />
+
+            <RadioButton
+                android:id="@+id/radio_voice_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="All feedback" />
+        </RadioGroup>
+
+        <!-- ===================================================== -->
+        <!-- PLANK DURATION                                         -->
+        <!-- ===================================================== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Plank Target Duration"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_plank_duration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_plank_15"
+                style="@style/Widget.SmartFit.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="15 sec" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_plank_30"
+                style="@style/Widget.SmartFit.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="30 sec" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_plank_45"
+                style="@style/Widget.SmartFit.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="45 sec" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_plank_60"
+                style="@style/Widget.SmartFit.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="60 sec" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- ===================================================== -->
+        <!-- PLANK RULES                                            -->
+        <!-- ===================================================== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Plank Rules"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_require_correct_pose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Countdown requires correct pose" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_plank_voice_countdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Speak final 10 seconds" />
+
+        <!-- ===================================================== -->
+        <!-- FORM BREAK ACTION                                      -->
+        <!-- ===================================================== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="When Plank Form Breaks"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <RadioGroup
+            android:id="@+id/radio_group_form_break_action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <RadioButton
+                android:id="@+id/radio_break_pause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pause session" />
+
+            <RadioButton
+                android:id="@+id/radio_break_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel session" />
+        </RadioGroup>
+
+        <!-- ===================================================== -->
+        <!-- ACTION BUTTON                                           -->
+        <!-- ===================================================== -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save_preferences"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:text="Save Preferences" />
+
+    </LinearLayout>
+</ScrollView>

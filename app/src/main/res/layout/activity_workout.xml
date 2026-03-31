@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- ========================================================= -->
+    <!-- FULL CAMERA / PREVIEW LAYER                               -->
+    <!-- ========================================================= -->
+    <FrameLayout
+        android:id="@+id/camera_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Camera preview -->
+        <androidx.camera.view.PreviewView
+            android:id="@+id/preview_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:keepScreenOn="true"
+            app:implementationMode="performance"
+            app:scaleType="fillCenter" />
+
+        <!-- Pose skeleton overlay -->
+        <com.example.smartfit.ui.workout.PoseOverlayView
+            android:id="@+id/pose_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Top scrim for readability -->
+        <View
+            android:id="@+id/view_top_scrim"
+            android:layout_width="match_parent"
+            android:layout_height="92dp"
+            android:background="@drawable/bg_top_scrim" />
+
+        <!-- Bottom scrim for readability -->
+        <View
+            android:id="@+id/view_bottom_scrim"
+            android:layout_width="match_parent"
+            android:layout_height="110dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_bottom_scrim" />
+    </FrameLayout>
+
+    <!-- ========================================================= -->
+    <!-- CENTER COUNTDOWN OVERLAY                                  -->
+    <!-- Used for start countdown / plank countdown / final 10s    -->
+    <!-- Hidden by default                                         -->
+    <!-- ========================================================= -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_countdown_overlay"
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#CC111111"
+        app:cardCornerRadius="80dp"
+        app:cardElevation="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_countdown_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10"
+                android:textColor="@android:color/white"
+                android:textSize="40sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_countdown_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Seconds"
+                android:textColor="#D1D5DB"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ========================================================= -->
+    <!-- TOP SESSION INFO CARD                                     -->
+    <!-- Shows title, state, timer, metric, and preferences button -->
+    <!-- ========================================================= -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_session_info"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="16dp"
+        app:cardBackgroundColor="#99111111"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Header row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_workout_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Push Up"
+                        android:textColor="@android:color/white"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_session_state"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="State: Idle"
+                        android:textColor="#D1D5DB"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <!-- Preferences / settings button -->
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btn_preferences"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_circle_preferences_button"
+                    android:contentDescription="Workout preferences"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_settings"
+                    android:tint="@android:color/white" />
+            </LinearLayout>
+
+            <!-- Metric cards -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <!-- Timer card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_timer_metric"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    app:cardBackgroundColor="#1FFFFFFF"
+                    app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:id="@+id/tv_timer_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Timer"
+                            android:textColor="#D1D5DB"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tv_timer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="00:00"
+                            android:textColor="@android:color/white"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Generic metric card -->
+                <!-- Can display Reps / Remaining / Hold / Goal -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_primary_metric"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    app:cardBackgroundColor="#1FFFFFFF"
+                    app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:id="@+id/tv_primary_metric_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Reps"
+                            android:textColor="#D1D5DB"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tv_primary_metric_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="0"
+                            android:textColor="@android:color/white"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ========================================================= -->
+    <!-- FEEDBACK CARD                                              -->
+    <!-- Shows live coaching / warnings / guidance                  -->
+    <!-- ========================================================= -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_feedback"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
+        app:cardBackgroundColor="#E6FFFFFF"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toTopOf="@id/btn_main_action"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/tv_feedback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="14dp"
+            android:text="Choose a workout and get into frame."
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ========================================================= -->
+    <!-- MAIN ACTION BUTTON                                         -->
+    <!-- Start / Pause / Resume depending on session state          -->
+    <!-- ========================================================= -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_main_action"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:minWidth="170dp"
+        android:text="Start Session"
+        android:textStyle="bold"
+        app:cornerRadius="20dp"
+        app:iconGravity="textStart"
+        app:layout_constraintBottom_toTopOf="@id/card_controls"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- ========================================================= -->
+    <!-- BOTTOM CONTROL PANEL                                       -->
+    <!-- Shown mainly before session / when paused                  -->
+    <!-- ========================================================= -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_controls"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="20dp"
+        app:cardBackgroundColor="#F8FFFFFF"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layout_controls_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Workout selection title -->
+            <TextView
+                android:id="@+id/tv_choose_workout_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose Workout"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <!-- Workout chips -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_workouts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/btn_select_pushup"
+                    style="@style/Widget.SmartFit.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Push-up" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/btn_select_squat"
+                    style="@style/Widget.SmartFit.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Squat" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/btn_select_situp"
+                    style="@style/Widget.SmartFit.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sit-up" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/btn_select_plank"
+                    style="@style/Widget.SmartFit.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Plank" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- End session button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_end_session"
+                style="@style/Widget.SmartFit.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="12dp"
+                android:text="End Session" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

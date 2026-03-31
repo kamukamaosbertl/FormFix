@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <!-- This creates a light, transparent version of your theme color -->
+    <solid android:color="#EAF2FF" /> <!-- 10% opacity of cat_blue -->
+
+    <size
+        android:width="40dp"
+        android:height="40dp" />
+</shape>

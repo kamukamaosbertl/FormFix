@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="recycler_sensors" type="id" />
+    <item name="tv_notification_status" type="id" />
+    <item name="btn_copy_fcm_token" type="id" />
+    <item name="btn_get_fcm_token" type="id" />
+    <item name="tv_fcm_token" type="id" />
+    <item name="btn_send_remote" type="id" />
+    <item name="et_remote_target" type="id" />
+    <item name="til_remote_target" type="id" />
+    <item name="et_remote_message" type="id" />
+    <item name="et_remote_title" type="id" />
+    <item name="chip_target_token" type="id" />
+    <item name="chip_target_topic" type="id" />
+    <item name="chip_group_target" type="id" />
+    <item name="btn_cancel_reminder" type="id" />
+    <item name="btn_schedule_reminder" type="id" />
+    <item name="btn_send_local" type="id" />
+    <item name="btn_pick_time" type="id" />
+    <item name="tv_selected_time" type="id" />
+    <item name="et_local_message" type="id" />
+    <item name="et_local_title" type="id" />
+    <item name="btn_request_permission" type="id" />
+    <item name="iv_permission_indicator" type="id" />
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Widget.SmartFit.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="cornerRadius">16dp</item>
+    </style>
+
+    <style name="Widget.SmartFit.Chip.Filter" parent="Widget.Material3.Chip.Filter" />
+
+</resources>

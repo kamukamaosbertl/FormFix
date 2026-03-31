@@ -1,0 +1,62 @@
+<resources>
+    <string name="app_name">Smart Fit</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Customize your SmartFit experience</string>
+    <string name="settings_name_hint">Name</string>
+    <string name="settings_step_goal_hint">Daily step goal</string>
+    <string name="settings_water_goal_hint">Daily water goal (liters)</string>
+    <string name="settings_notifications">Enable notifications</string>
+    <string name="settings_reminders">Workout reminders</string>
+    <string name="settings_units_label">Preferred units</string>
+    <string name="settings_units_metric">Metric</string>
+    <string name="settings_units_imperial">Imperial</string>
+
+    <string name="settings_btn_save">Save settings</string>
+    <string name="settings_btn_reset">Reset form</string>
+    <string name="settings_btn_about">Open about</string>
+    <string name="settings_btn_back_home">Back to home</string>
+    <string name="settings_btn_logout">Log out</string>
+
+    <string name="settings_toast_saved">Settings saved</string>
+    <string name="settings_toast_invalid_values">Enter valid numbers for goals</string>
+    <string name="settings_toast_positive_values">Goals must be greater than zero</string>
+    <string name="settings_toast_form_reset">Form reset to default values</string>
+    <string name="settings_toast_logged_out">Logged out and local settings cleared</string>
+
+    <string name="main_more_actions">More actions</string>
+    <string name="main_welcome_default">Welcome to SmartFit</string>
+    <string name="main_welcome_named">Welcome back, %1$s</string>
+    <string name="main_goal_summary_default">Set your goals to stay consistent.</string>
+    <string name="main_goal_summary_template">Today\'s goals: %1$d steps, %2$.1fL water</string>
+    <string name="main_quick_actions">Quick actions</string>
+    <string name="main_btn_settings">Open settings</string>
+    <string name="main_btn_about">About SmartFit</string>
+    <string name="main_btn_start_workout">Start quick workout</string>
+    <string name="main_hint_more_actions">Use the floating button in the corner to show more actions.</string>
+    <string name="main_workout_toast">Workout mode coming soon</string>
+
+    <string name="about_logo_desc">SmartFit app logo</string>
+    <string name="about_title">About SmartFit</string>
+    <string name="about_version_placeholder">Version</string>
+    <string name="about_version_template">Version %1$s</string>
+    <string name="about_body">SmartFit helps you manage your daily movement, hydration, and reminders in one simple workflow. Configure your goals in Settings and track progress consistently.</string>
+    <string name="about_actions">Actions</string>
+    <string name="about_btn_settings">Open settings</string>
+    <string name="about_btn_share">Share app</string>
+    <string name="about_btn_back">Back to home</string>
+    <string name="about_share_chooser">Share SmartFit via</string>
+    <string name="about_share_message">I\'m using SmartFit to manage daily fitness goals. Try it out.</string>
+
+    <string name="about_btn_device">Device dashboard</string>
+    <string name="item_info_category">Category</string>
+    <string name="btn_settings_icon">Settings</string>
+    <string name="btn_about_icon">About</string>
+    <string name="system_monitor">System Monitor</string>
+    <string name="sensor_monitor">Sensor Monitor</string>
+    <string name="network_monitor">Network Monitor</string>
+    <string name="device_dashboard">Device Dashboard</string>
+    <string name="monitor">Monitor</string>
+    <string name="notification_center">Notification Center</string>
+    <string name="manage_local_reminders_and_remote_push_alerts">Manage local reminders and remote push alerts.</string>
+</resources>
