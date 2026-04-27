@@ -2,6 +2,7 @@ package com.example.smartfit.ui.workout;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.os.Bundle;
@@ -24,8 +25,13 @@ import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smartfit.R;
+import com.example.smartfit.ui.history.HistoryActivity;
+import com.example.smartfit.ui.history.WorkoutHistoryAdapter;
+import com.example.smartfit.workout.db.WorkoutSessionEntity;
 import com.example.smartfit.workout.engine.PoseAnalyzer;
 import com.example.smartfit.workout.engine.PoseFrameAnalyzer;
 import com.example.smartfit.workout.engine.PoseOverlayMapper;
@@ -94,6 +100,7 @@ public class WorkoutActivity extends AppCompatActivity {
     // BUTTONS
     // =========================================================
     private AppCompatImageButton btnSwitchCamera;
+    private AppCompatImageButton btnHistory;
 
     // =========================================================
     // CORE DEPENDENCIES
@@ -199,6 +206,7 @@ public class WorkoutActivity extends AppCompatActivity {
         cardCountdown = findViewById(R.id.card_countdown_overlay);
 
         btnSwitchCamera = findViewById(R.id.btn_switch_camera);
+        btnHistory = findViewById(R.id.btn_history);
     }
 
     // =========================================================
@@ -388,6 +396,7 @@ public class WorkoutActivity extends AppCompatActivity {
         btnEndSession.setOnClickListener(v -> sessionManager.endSession());
         btnPreferences.setOnClickListener(v -> openWorkoutPreferences());
         btnSwitchCamera.setOnClickListener(v -> switchCamera());
+        btnHistory.setOnClickListener(v -> openHistoryPreview());
     }
 
     private void handleMainAction() {
@@ -540,6 +549,58 @@ public class WorkoutActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
+    private void openHistoryPreview() {
+
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+
+        View view = getLayoutInflater()
+                .inflate(R.layout.dialog_history_preview, null);
+
+        dialog.setContentView(view);
+
+        RecyclerView recyclerRecent =
+                view.findViewById(R.id.recycler_recent_sessions);
+
+        MaterialButton btnFullHistory =
+                view.findViewById(R.id.btn_view_full_history);
+
+        MaterialButton btnExport =
+                view.findViewById(R.id.btn_export_history_pdf);
+
+        recyclerRecent.setLayoutManager(
+                new LinearLayoutManager(this)
+        );
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+
+            List<WorkoutSessionEntity> sessions =
+                    WorkoutRepository.getInstance(this).getAllSessions();
+
+            if (sessions.size() > 3) {
+                sessions = sessions.subList(0, 3);
+            }
+
+            List<WorkoutSessionEntity> finalSessions = sessions;
+
+            runOnUiThread(() ->
+                    recyclerRecent.setAdapter(
+                            new WorkoutHistoryAdapter(finalSessions)
+                    )
+            );
+        });
+
+        btnFullHistory.setOnClickListener(v -> {
+            startActivity(new Intent(this, HistoryActivity.class));
+            dialog.dismiss();
+        });
+
+        btnExport.setOnClickListener(v -> {
+            startActivity(new Intent(this, HistoryActivity.class));
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
     // =========================================================
     // ACCELEROMETER GATE SETUP
     // =========================================================

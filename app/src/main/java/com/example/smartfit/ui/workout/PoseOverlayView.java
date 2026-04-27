@@ -19,29 +19,55 @@ import java.util.List;
 public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callback {
 
     // =========================================================
-    // DRAWING PAINTS
+    // SMOOTHING CONFIGURATION
     // =========================================================
-    private final Paint pointPaint = new Paint();
-    private final Paint linePaint = new Paint();
-    private final Paint clearPaint = new Paint();
+
+    /**
+     * Exponential smoothing factor.
+     * 0.0 = no movement
+     * 1.0 = no smoothing
+     *
+     * 0.35–0.55 works best for pose landmarks.
+     */
+    private static final float SMOOTHING_ALPHA = 0.45f;
 
     // =========================================================
-    // DATA TO DRAW
+    // PAINTS
     // =========================================================
+
+    private final Paint pointPaint = new Paint();
+    private final Paint linePaint = new Paint();
+
+    // =========================================================
+    // DATA
+    // =========================================================
+
     private final Object drawLock = new Object();
-    private List<PointF> points = new ArrayList<>();
-    private List<int[]> connections = new ArrayList<>();
+
+    private final List<PointF> points = new ArrayList<>();
+    private final List<int[]> connections = new ArrayList<>();
+
+    private final List<PointF> renderPoints = new ArrayList<>();
+    private final List<int[]> renderConnections = new ArrayList<>();
+
+    // Smoothed landmark buffer
+    private final List<PointF> smoothedPoints = new ArrayList<>();
 
     // =========================================================
     // RENDER THREAD STATE
     // =========================================================
+
     private SurfaceHolder surfaceHolder;
     private Thread renderThread;
+
     private boolean surfaceAvailable = false;
     private boolean renderRequested = false;
     private boolean running = false;
-    private boolean dataDirty = false; // true only when new pose data has arrived
+    private boolean dataDirty = false;
 
+    // =========================================================
+    // CONSTRUCTORS
+    // =========================================================
 
     public PoseOverlayView(Context context) {
         super(context);
@@ -58,45 +84,54 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
         init();
     }
 
+    // =========================================================
+    // INITIALIZATION
+    // =========================================================
+
     private void init() {
-        // -----------------------------------------------------
-        // Transparent SurfaceView so camera preview remains visible below
-        // -----------------------------------------------------
+
         setZOrderOnTop(true);
+
         surfaceHolder = getHolder();
         surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
         surfaceHolder.addCallback(this);
 
-        // -----------------------------------------------------
         // Point style
-        // -----------------------------------------------------
         pointPaint.setColor(Color.GREEN);
         pointPaint.setStyle(Paint.Style.FILL);
         pointPaint.setAntiAlias(true);
 
-        // -----------------------------------------------------
         // Line style
-        // -----------------------------------------------------
         linePaint.setColor(Color.WHITE);
         linePaint.setStyle(Paint.Style.STROKE);
         linePaint.setStrokeWidth(6f);
         linePaint.setAntiAlias(true);
-
-        // -----------------------------------------------------
-        // Clear paint for transparent redraw
-        // -----------------------------------------------------
-        clearPaint.setColor(Color.TRANSPARENT);
-        clearPaint.setStyle(Paint.Style.FILL);
     }
 
     // =========================================================
     // PUBLIC API
     // =========================================================
-    public void setPoseData(@Nullable List<PointF> points, @Nullable List<int[]> connections) {
+
+    public void setPoseData(@Nullable List<PointF> newPoints,
+                            @Nullable List<int[]> newConnections) {
+
         synchronized (drawLock) {
-            this.points = points != null ? new ArrayList<>(points) : new ArrayList<>();
-            this.connections = connections != null ? new ArrayList<>(connections) : new ArrayList<>();
-            dataDirty = true;         // mark that there is something new to draw
+
+            // Update raw points
+            points.clear();
+            if (newPoints != null) {
+                points.addAll(newPoints);
+            }
+
+            // Update connections
+            connections.clear();
+            if (newConnections != null) {
+                connections.addAll(newConnections);
+            }
+
+            applySmoothing();
+
+            dataDirty = true;
             renderRequested = true;
             drawLock.notifyAll();
         }
@@ -104,16 +139,62 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
 
     public void clearPose() {
         synchronized (drawLock) {
-            this.points.clear();
-            this.connections.clear();
+
+            points.clear();
+            connections.clear();
+            smoothedPoints.clear();
+
+            dataDirty = true;
             renderRequested = true;
+
             drawLock.notifyAll();
+        }
+    }
+
+    // =========================================================
+    // POSE SMOOTHING FILTER
+    // =========================================================
+
+    /**
+     * Applies exponential smoothing to reduce jitter
+     * between frames.
+     */
+    private void applySmoothing() {
+
+        if (points.isEmpty()) {
+            smoothedPoints.clear();
+            return;
+        }
+
+        if (smoothedPoints.size() != points.size()) {
+
+            smoothedPoints.clear();
+
+            for (PointF p : points) {
+                smoothedPoints.add(new PointF(p.x, p.y));
+            }
+
+            return;
+        }
+
+        for (int i = 0; i < points.size(); i++) {
+
+            PointF current = points.get(i);
+            PointF previous = smoothedPoints.get(i);
+
+            if (current == null || previous == null) {
+                continue;
+            }
+
+            previous.x = previous.x + SMOOTHING_ALPHA * (current.x - previous.x);
+            previous.y = previous.y + SMOOTHING_ALPHA * (current.y - previous.y);
         }
     }
 
     // =========================================================
     // SURFACE CALLBACKS
     // =========================================================
+
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
         surfaceAvailable = true;
@@ -121,7 +202,10 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
     }
 
     @Override
-    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+    public void surfaceChanged(@NonNull SurfaceHolder holder,
+                               int format,
+                               int width,
+                               int height) {
         surfaceAvailable = true;
     }
 
@@ -134,17 +218,19 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
     // =========================================================
     // RENDER THREAD
     // =========================================================
+
     private void startRenderThread() {
-        if (running) {
-            return;
-        }
+
+        if (running) return;
 
         running = true;
+
         renderThread = new Thread(this::renderLoop, "PoseOverlayRenderThread");
         renderThread.start();
     }
 
     private void stopRenderThread() {
+
         running = false;
 
         synchronized (drawLock) {
@@ -157,14 +243,19 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+
             renderThread = null;
         }
     }
 
     private void renderLoop() {
+
         while (running) {
+
             synchronized (drawLock) {
+
                 while (running && !renderRequested) {
+
                     try {
                         drawLock.wait();
                     } catch (InterruptedException e) {
@@ -172,12 +263,11 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
                         return;
                     }
                 }
+
                 renderRequested = false;
             }
 
-            if (!surfaceAvailable) {
-                continue;
-            }
+            if (!surfaceAvailable) continue;
 
             drawFrame();
         }
@@ -186,64 +276,73 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
     // =========================================================
     // DRAWING
     // =========================================================
+
     private void drawFrame() {
-        // Bail early if nothing changed since last draw.
-        // This prevents redundant canvas locks during heavy inference on low-end devices.
+
         synchronized (drawLock) {
-            if (!dataDirty) {
-                return;
-            }
+            if (!dataDirty) return;
             dataDirty = false;
         }
+
         Canvas canvas = null;
+
         try {
+
             canvas = surfaceHolder.lockCanvas();
-            if (canvas == null) {
-                return;
-            }
 
-            // -------------------------------------------------
-            // Clear old frame
-            // -------------------------------------------------
-            canvas.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);
+            if (canvas == null) return;
 
-            List<PointF> localPoints;
-            List<int[]> localConnections;
+            canvas.drawColor(Color.TRANSPARENT);
 
             synchronized (drawLock) {
-                localPoints = new ArrayList<>(points);
-                localConnections = new ArrayList<>(connections);
+
+                renderPoints.clear();
+                renderPoints.addAll(smoothedPoints);
+
+                renderConnections.clear();
+                renderConnections.addAll(connections);
             }
 
-            // -------------------------------------------------
-            // Draw skeleton connections
-            // -------------------------------------------------
-            for (int[] pair : localConnections) {
+            // Draw skeleton lines
+            for (int[] pair : renderConnections) {
+
                 int start = pair[0];
                 int end = pair[1];
 
-                if (start >= 0 && start < localPoints.size()
-                        && end >= 0 && end < localPoints.size()) {
+                if (start >= renderPoints.size() || end >= renderPoints.size())
+                    continue;
 
-                    PointF p1 = localPoints.get(start);
-                    PointF p2 = localPoints.get(end);
+                PointF p1 = renderPoints.get(start);
+                PointF p2 = renderPoints.get(end);
 
-                    if (p1 != null && p2 != null) {
-                        canvas.drawLine(p1.x, p1.y, p2.x, p2.y, linePaint);
-                    }
+                if (p1 != null && p2 != null) {
+
+                    canvas.drawLine(
+                            p1.x,
+                            p1.y,
+                            p2.x,
+                            p2.y,
+                            linePaint
+                    );
                 }
             }
 
-            // -------------------------------------------------
             // Draw landmark points
-            // -------------------------------------------------
-            for (PointF point : localPoints) {
+            for (PointF point : renderPoints) {
+
                 if (point != null) {
-                    canvas.drawCircle(point.x, point.y, 10f, pointPaint);
+
+                    canvas.drawCircle(
+                            point.x,
+                            point.y,
+                            10f,
+                            pointPaint
+                    );
                 }
             }
 
         } finally {
+
             if (canvas != null) {
                 surfaceHolder.unlockCanvasAndPost(canvas);
             }
@@ -253,6 +352,7 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
     // =========================================================
     // CLEANUP
     // =========================================================
+
     public void release() {
         stopRenderThread();
     }
