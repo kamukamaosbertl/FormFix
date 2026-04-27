@@ -79,6 +79,9 @@ public class PoseDataMapper {
 
         double backAngle = backAngleSmoother.smooth(getBackAngle3D(pose));
 
+        // All angles in PoseFrameData are pre-smoothed via a 5-sample moving average.
+        // Do NOT apply additional smoothing in PoseAnalyzer or WorkoutFeedbackEngine —
+        // double-smoothing increases lag and causes reps to register late.
         return new PoseFrameData(
                 leftElbowAngle,
                 rightElbowAngle,
