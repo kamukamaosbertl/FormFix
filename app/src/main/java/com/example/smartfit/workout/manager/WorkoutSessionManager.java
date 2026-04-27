@@ -15,6 +15,7 @@ import com.example.smartfit.workout.model.enums.WorkoutType;
 import com.example.smartfit.workout.repository.WorkoutRepository;
 import com.example.smartfit.workout.engine.PoseAnalyzer;
 import com.example.smartfit.workout.engine.WorkoutFeedbackEngine;
+import com.example.smartfit.workout.haptic.WorkoutHapticCoach;
 
 public class WorkoutSessionManager {
 
@@ -31,6 +32,8 @@ public class WorkoutSessionManager {
     private final WorkoutRepository repository;
     private final WorkoutFeedbackEngine feedbackEngine;
     private final PoseAnalyzer poseAnalyzer;
+    @NonNull
+    private final WorkoutHapticCoach hapticCoach;
     @Nullable
     private final Listener listener;
 
@@ -43,11 +46,13 @@ public class WorkoutSessionManager {
             @NonNull WorkoutRepository repository,
             @NonNull WorkoutFeedbackEngine feedbackEngine,
             @NonNull PoseAnalyzer poseAnalyzer,
+            @NonNull WorkoutHapticCoach hapticCoach,
             @Nullable Listener listener
     ) {
         this.repository = repository;
         this.feedbackEngine = feedbackEngine;
         this.poseAnalyzer = poseAnalyzer;
+        this.hapticCoach = hapticCoach;
         this.listener = listener;
         this.preferences = new WorkoutPreferences();
     }
@@ -85,6 +90,7 @@ public class WorkoutSessionManager {
         lastPlankProgressTimestampMillis = 0L;
 
         dispatchFeedback(WorkoutFeedback.info(workoutType.getDisplayName() + " session started"));
+        hapticCoach.vibrateSessionStart();
 
         if (listener != null) {
             listener.onRepUpdated(currentSession.getRepCount());
@@ -96,6 +102,7 @@ public class WorkoutSessionManager {
                 );
             }
         }
+
     }
 
     public void pauseSession() {
@@ -140,6 +147,8 @@ public class WorkoutSessionManager {
             listener.onSessionCompleted(currentSession);
         }
 
+        hapticCoach.vibrateSessionEnd();
+
         currentSession = null;
         lastPlankProgressTimestampMillis = 0L;
         poseAnalyzer.reset();
@@ -156,6 +165,8 @@ public class WorkoutSessionManager {
         if (listener != null) {
             listener.onSessionCancelled(currentSession);
         }
+
+        hapticCoach.vibrateSessionEnd();
 
         currentSession = null;
         lastPlankProgressTimestampMillis = 0L;
@@ -215,6 +226,7 @@ public class WorkoutSessionManager {
         if (repResult.isRepCompleted()) {
             currentSession.incrementRepCount();
 
+            hapticCoach.vibrateRepConfirm();
             if (listener != null) {
                 listener.onRepUpdated(currentSession.getRepCount());
             }
@@ -287,6 +299,11 @@ public class WorkoutSessionManager {
         if (currentSession != null) {
             currentSession.setLastFeedback(feedback.getMessage());
         }
+
+        // Haptic mirrors voice — WARNING/ERROR get a buzz, GOOD/INFO are silent
+        // by default inside vibrateForFeedback(). This runs on the calling thread
+        // (camera background thread) which is fine — Vibrator is thread-safe.
+        hapticCoach.vibrateForFeedback(feedback);
 
         if (listener != null) {
             listener.onFeedbackUpdated(feedback);

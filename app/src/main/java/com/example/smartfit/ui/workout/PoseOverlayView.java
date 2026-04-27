@@ -40,6 +40,8 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
     private boolean surfaceAvailable = false;
     private boolean renderRequested = false;
     private boolean running = false;
+    private boolean dataDirty = false; // true only when new pose data has arrived
+
 
     public PoseOverlayView(Context context) {
         super(context);
@@ -94,6 +96,7 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
         synchronized (drawLock) {
             this.points = points != null ? new ArrayList<>(points) : new ArrayList<>();
             this.connections = connections != null ? new ArrayList<>(connections) : new ArrayList<>();
+            dataDirty = true;         // mark that there is something new to draw
             renderRequested = true;
             drawLock.notifyAll();
         }
@@ -184,8 +187,15 @@ public class PoseOverlayView extends SurfaceView implements SurfaceHolder.Callba
     // DRAWING
     // =========================================================
     private void drawFrame() {
+        // Bail early if nothing changed since last draw.
+        // This prevents redundant canvas locks during heavy inference on low-end devices.
+        synchronized (drawLock) {
+            if (!dataDirty) {
+                return;
+            }
+            dataDirty = false;
+        }
         Canvas canvas = null;
-
         try {
             canvas = surfaceHolder.lockCanvas();
             if (canvas == null) {

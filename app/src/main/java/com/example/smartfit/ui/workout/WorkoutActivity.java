@@ -1,6 +1,7 @@
 package com.example.smartfit.ui.workout;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.os.Bundle;
@@ -39,6 +40,10 @@ import com.example.smartfit.workout.model.enums.VoiceFeedbackMode;
 import com.example.smartfit.workout.model.enums.FormBreakAction;
 import com.example.smartfit.workout.repository.WorkoutRepository;
 import com.example.smartfit.workout.audio.WorkoutVoiceCoach;
+import com.example.smartfit.workout.haptic.WorkoutHapticCoach;
+import com.example.smartfit.workout.sensor.AccelerometerGate;
+
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -51,6 +56,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class WorkoutActivity extends AppCompatActivity {
 
@@ -85,6 +91,11 @@ public class WorkoutActivity extends AppCompatActivity {
     private MaterialCardView cardCountdown;
 
     // =========================================================
+    // BUTTONS
+    // =========================================================
+    private AppCompatImageButton btnSwitchCamera;
+
+    // =========================================================
     // CORE DEPENDENCIES
     // =========================================================
     private WorkoutSessionManager sessionManager;
@@ -100,6 +111,9 @@ public class WorkoutActivity extends AppCompatActivity {
     // =========================================================
     // CAMERA
     // =========================================================
+    // Tracks which camera is currently bound.
+    // Read this at the mapToOverlay call site instead of hardcoding true/false.
+    private CameraSelector activeCameraSelector;
     private ExecutorService cameraExecutor;
     private PoseFrameAnalyzer poseFrameAnalyzer;
 
@@ -110,10 +124,14 @@ public class WorkoutActivity extends AppCompatActivity {
     private WorkoutVoiceCoach voiceCoach;
 
     // =========================================================
+    // ACCELEROMETER GATE
+    // =========================================================
+    private AccelerometerGate accelerometerGate;
+
+    // =========================================================
     // TIMER
     // =========================================================
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
-
     private final Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
@@ -179,6 +197,8 @@ public class WorkoutActivity extends AppCompatActivity {
 
         cardControls = findViewById(R.id.card_controls);
         cardCountdown = findViewById(R.id.card_countdown_overlay);
+
+        btnSwitchCamera = findViewById(R.id.btn_switch_camera);
     }
 
     // =========================================================
@@ -196,10 +216,12 @@ public class WorkoutActivity extends AppCompatActivity {
     }
 
     private void setupSessionManager() {
+        WorkoutHapticCoach hapticCoach = new WorkoutHapticCoach(this);
         sessionManager = new WorkoutSessionManager(
-                WorkoutRepository.getInstance(),
+                WorkoutRepository.getInstance(this),
                 new WorkoutFeedbackEngine(),
                 new PoseAnalyzer(),
+                hapticCoach,
                 new WorkoutSessionManager.Listener() {
 
                     @Override
@@ -228,7 +250,7 @@ public class WorkoutActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFeedbackUpdated(WorkoutFeedback feedback) {
+                    public void onFeedbackUpdated(@NonNull WorkoutFeedback feedback) {
                         runOnUiThread(() -> {
                             tvFeedback.setText(feedback.getMessage());
                             voiceCoach.speakFeedback(feedback);
@@ -236,7 +258,7 @@ public class WorkoutActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onSessionCompleted(WorkoutSession session) {
+                    public void onSessionCompleted(@NonNull WorkoutSession session) {
                         runOnUiThread(() -> {
                             voiceCoach.resetSpeechHistory();
                             renderSessionCompleted(session);
@@ -244,7 +266,7 @@ public class WorkoutActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onSessionCancelled(WorkoutSession session) {
+                    public void onSessionCancelled(@NonNull WorkoutSession session) {
                         runOnUiThread(() -> {
                             voiceCoach.resetSpeechHistory();
                             renderSessionCancelled(session);
@@ -252,12 +274,12 @@ public class WorkoutActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onSessionPaused(WorkoutSession session) {
+                    public void onSessionPaused(@NonNull WorkoutSession session) {
                         runOnUiThread(() -> renderPaused());
                     }
 
                     @Override
-                    public void onSessionResumed(WorkoutSession session) {
+                    public void onSessionResumed(@NonNull WorkoutSession session) {
                         runOnUiThread(() -> renderResumed());
                     }
                 }
@@ -365,6 +387,7 @@ public class WorkoutActivity extends AppCompatActivity {
         btnMainAction.setOnClickListener(v -> handleMainAction());
         btnEndSession.setOnClickListener(v -> sessionManager.endSession());
         btnPreferences.setOnClickListener(v -> openWorkoutPreferences());
+        btnSwitchCamera.setOnClickListener(v -> switchCamera());
     }
 
     private void handleMainAction() {
@@ -468,6 +491,80 @@ public class WorkoutActivity extends AppCompatActivity {
 
         dialog.show();
     }
+
+    private void switchCamera() {
+
+        if (activeCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
+            activeCameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+            tvFeedback.setText("Back camera");
+        } else {
+            activeCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+            tvFeedback.setText("Front camera");
+        }
+
+        restartCamera();
+    }
+
+    private void restartCamera() {
+
+        ListenableFuture<ProcessCameraProvider> future =
+                ProcessCameraProvider.getInstance(this);
+
+        future.addListener(() -> {
+            try {
+
+                ProcessCameraProvider provider = future.get();
+
+                provider.unbindAll();
+
+                Preview preview = new Preview.Builder().build();
+                preview.setSurfaceProvider(previewView.getSurfaceProvider());
+
+                ImageAnalysis analysis = new ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build();
+
+                analysis.setAnalyzer(cameraExecutor, poseFrameAnalyzer);
+
+                provider.bindToLifecycle(
+                        this,
+                        activeCameraSelector,
+                        preview,
+                        analysis
+                );
+
+            } catch (Exception e) {
+                tvFeedback.setText("Camera switch failed");
+            }
+
+        }, ContextCompat.getMainExecutor(this));
+    }
+
+    // =========================================================
+    // ACCELEROMETER GATE SETUP
+    // =========================================================
+    private void setupAccelerometerGate(Context context) {
+
+        accelerometerGate = new AccelerometerGate(context);
+
+        accelerometerGate.setListener(new AccelerometerGate.Listener() {
+
+            @Override
+            public void onMotionStopped() {
+                runOnUiThread(() ->
+                        tvFeedback.setText("Waiting for movement...")
+                );
+            }
+
+            @Override
+            public void onMotionResumed() {
+                runOnUiThread(() ->
+                        tvFeedback.setText("")
+                );
+            }
+        });
+    }
+
 
     // =========================================================
     // PREFERENCES UI -> FILL CURRENT VALUES
@@ -630,8 +727,10 @@ public class WorkoutActivity extends AppCompatActivity {
                     @Override
                     public void onPoseDataReady(PoseFrameData data, Pose pose, int imageWidth, int imageHeight, int rotationDegrees) {
 
+                        boolean isFrontCamera = (activeCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA);
+
                         List<PointF> points = overlayMapper.mapToOverlay(
-                                pose, imageWidth, imageHeight, rotationDegrees ,previewView, true
+                                pose, imageWidth, imageHeight, rotationDegrees ,previewView, isFrontCamera
                         );
 
                         runOnUiThread(() ->
@@ -656,11 +755,24 @@ public class WorkoutActivity extends AppCompatActivity {
                     }
                 });
 
+                // Attach the gate. PoseFrameAnalyzer will call isMotionDetected()
+                // on every frame before running ML Kit inference
+                poseFrameAnalyzer.setAccelerometerGate(accelerometerGate);
+
+                // Start the accelerometer alongside the camera so the gate is
+                // warmed up and has samples before the first frame arrives.
+                if (accelerometerGate != null && accelerometerGate.isAvailable()) {
+                    accelerometerGate.start();
+                }
+
                 analysis.setAnalyzer(cameraExecutor, poseFrameAnalyzer);
+                if (activeCameraSelector == null) {
+                    activeCameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+                }
 
                 provider.unbindAll();
                 provider.bindToLifecycle(this,
-                        CameraSelector.DEFAULT_FRONT_CAMERA,
+                        activeCameraSelector,
                         preview,
                         analysis);
 
@@ -732,11 +844,36 @@ public class WorkoutActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         stopTimer();
 
-        if (poseFrameAnalyzer != null) poseFrameAnalyzer.stop();
+        shutdown();
         if (poseOverlayView != null) poseOverlayView.release();
-        if (cameraExecutor != null) cameraExecutor.shutdown();
+
     }
+
+    public void shutdown() {
+        // Stop the analyzer first so no new frames are submitted
+        if (poseFrameAnalyzer != null) {
+            poseFrameAnalyzer.stop();
+        }
+
+        // Graceful shutdown: wait briefly for the current frame to finish,
+        // then force-stop. This prevents an orphaned inference callback
+        // from touching a destroyed Activity or closed SurfaceView.
+        if (cameraExecutor != null && !cameraExecutor.isShutdown()) {
+            cameraExecutor.shutdown();
+            try {
+                if (!cameraExecutor.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+                    cameraExecutor.shutdownNow();
+                    accelerometerGate.stop();
+                }
+            } catch (InterruptedException e) {
+                cameraExecutor.shutdownNow();
+                accelerometerGate.start();
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+
 }

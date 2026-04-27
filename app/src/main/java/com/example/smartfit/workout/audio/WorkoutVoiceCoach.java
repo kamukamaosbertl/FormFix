@@ -35,6 +35,9 @@ public class WorkoutVoiceCoach {
     private final AudioManager audioManager;
 
     @Nullable
+    private AudioManager.OnAudioFocusChangeListener legacyFocusListener = null;
+
+    @Nullable
     private AudioFocusRequest audioFocusRequest;
 
     private boolean initialized = false;
@@ -284,10 +287,11 @@ public class WorkoutVoiceCoach {
 
             audioManager.requestAudioFocus(audioFocusRequest);
         } else {
+            if (legacyFocusListener == null) {
+                legacyFocusListener = focusChange -> { /* no special action needed */ };
+            }
             audioManager.requestAudioFocus(
-                    focusChange -> {
-                        // No special action needed for now
-                    },
+                    legacyFocusListener,
                     AudioManager.STREAM_MUSIC,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
             );
@@ -304,7 +308,9 @@ public class WorkoutVoiceCoach {
                 audioManager.abandonAudioFocusRequest(audioFocusRequest);
             }
         } else {
-            audioManager.abandonAudioFocus(null);
+            if (legacyFocusListener != null) {
+                audioManager.abandonAudioFocus(legacyFocusListener);
+            }
         }
     }
 

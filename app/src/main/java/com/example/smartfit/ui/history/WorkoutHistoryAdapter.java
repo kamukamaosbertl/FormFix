@@ -9,16 +9,16 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smartfit.R;
-import com.example.smartfit.workout.model.WorkoutSession;
+import com.example.smartfit.workout.db.WorkoutSessionEntity;
 
 import java.util.List;
 import java.util.Locale;
 
 public class WorkoutHistoryAdapter extends RecyclerView.Adapter<WorkoutHistoryAdapter.ViewHolder> {
 
-    private final List<WorkoutSession> sessions;
+    private final List<WorkoutSessionEntity> sessions;
 
-    public WorkoutHistoryAdapter(List<WorkoutSession> sessions) {
+    public WorkoutHistoryAdapter(List<WorkoutSessionEntity> sessions) {
         this.sessions = sessions;
     }
 
@@ -32,12 +32,23 @@ public class WorkoutHistoryAdapter extends RecyclerView.Adapter<WorkoutHistoryAd
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        WorkoutSession session = sessions.get(position);
+        WorkoutSessionEntity session = sessions.get(position);
 
-        holder.tvWorkoutType.setText("Workout: " + formatWorkoutType(session.getWorkoutType().name()));
-        holder.tvRepCount.setText("Reps: " + session.getRepCount());
-        holder.tvDuration.setText("Duration: " + formatDuration(session.getDurationMillis()));
-        holder.tvFeedback.setText("Last feedback: " + session.getLastFeedback());
+        holder.tvWorkoutType.setText(
+                "Workout: " + formatWorkoutType(session.workoutType)
+        );
+
+        holder.tvRepCount.setText(
+                "Reps: " + session.repCount
+        );
+
+        holder.tvDuration.setText(
+                "Duration: " + formatDuration(session.activeDurationMillis)
+        );
+
+        holder.tvFeedback.setText(
+                "Last feedback: " + session.lastFeedback
+        );
     }
 
     @Override
@@ -46,6 +57,7 @@ public class WorkoutHistoryAdapter extends RecyclerView.Adapter<WorkoutHistoryAd
     }
 
     private String formatWorkoutType(String rawType) {
+        if (rawType == null) return "Unknown";
         return rawType.replace("_", " ");
     }
 
@@ -58,6 +70,7 @@ public class WorkoutHistoryAdapter extends RecyclerView.Adapter<WorkoutHistoryAd
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
+
         TextView tvWorkoutType;
         TextView tvRepCount;
         TextView tvDuration;
@@ -65,6 +78,7 @@ public class WorkoutHistoryAdapter extends RecyclerView.Adapter<WorkoutHistoryAd
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+
             tvWorkoutType = itemView.findViewById(R.id.tv_history_workout_type);
             tvRepCount = itemView.findViewById(R.id.tv_history_rep_count);
             tvDuration = itemView.findViewById(R.id.tv_history_duration);
